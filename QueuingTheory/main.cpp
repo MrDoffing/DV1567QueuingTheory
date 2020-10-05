@@ -12,14 +12,14 @@ private:
 	int m = 1; // Number of queuing nodes
 	int N = 50; // Number of customers
 
-	double Di = 0.25; // Rprime[1] = Di -> Residence time at first queuing node
+	double Di = 0.25; // Service demand, Rprime[1] = Di -> Residence time at first queuing node
 	double Z = 2.0; // Think time //Big brain time
 
 public:
 	ClosedModel(){}
 	ClosedModel(double _Di, double _Z) {
-		double Di = _Di; //Service demand
-		double Z = _Z; // Think time
+		double Di = _Di;
+		double Z = _Z;
 	}
 	~ClosedModel() {}
 
