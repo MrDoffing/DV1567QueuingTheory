@@ -6,14 +6,11 @@ using namespace std;
 //Liu. H, Software performance and scalability
 //s.163
 
-string printWithComma(double val) {
-	//return to_string(val);
-	if (isinf(val))
-		return "inf";
-	long round = val;
-	double rest = val - round;
-	int decimals = 3;
-	return to_string(round)+","+to_string(long(rest*pow(10,decimals)));
+string replace(string source, char target, char replacer) {
+	for (size_t i = 0; i < source.length(); i++)
+		if (source[i] == target)
+			source[i] = replacer;
+	return source;
 }
 
 struct ModelInfo {
@@ -84,45 +81,94 @@ public:
 };
 
 int main() {
+	// collect data
 	int people = 200;
-	float thinkTime = 30;
+	float thinkTime = 10;
 	ClosedModel cpu(0.0394, thinkTime, people);
 	ClosedModel disk1(0.0771, thinkTime, people);
 	ClosedModel disk2(0.1238, thinkTime, people);
 	ClosedModel disk3(0.0804, thinkTime, people);
 	ClosedModel disk4(0.235, thinkTime, people);
-
+	ClosedModel diskAverage((0.0771 + 0.1238 + 0.0804 + 0.235) / 4, thinkTime, people);
+	cout << 0.0771 + 0.1238 + 0.0804 + 0.235 + 0.0394 << endl;
+	cout << 1.f/(0.0771 + 0.1238 + 0.0804 + 0.235+ 0.0394) << endl;
 	vector<ModelInfo> iter_cpu = cpu.run();
 	vector<ModelInfo> iter_disk1 = disk1.run();
 	vector<ModelInfo> iter_disk2 = disk2.run();
 	vector<ModelInfo> iter_disk3 = disk3.run();
 	vector<ModelInfo> iter_disk4 = disk4.run();
+	vector<ModelInfo> iter_diskAverage = diskAverage.run();
 
+	// sort data
 	int iterations = iter_cpu.size();
 	vector<double> system_responseTime;
-	system_responseTime.resize(iter_cpu.size());
+	system_responseTime.resize(iterations);
+	vector<double> system_responseTime_balancedDiskLoad;
+	system_responseTime_balancedDiskLoad.resize(iterations);
+	vector<double> line_20Mark;
+	line_20Mark.resize(iterations);
+	vector<double> line_serviceTime3x;
+	line_serviceTime3x.resize(iterations);
 	for (size_t i = 0; i < iterations; i++)
 	{
 		iter_cpu[i].print();
+
 		system_responseTime[i] = iter_cpu[i].Ri + iter_disk1[i].Ri + iter_disk2[i].Ri + iter_disk3[i].Ri + iter_disk4[i].Ri;
-		//system_responseTime[i] = iter_cpu[i].Rprime + iter_disk1[i].Rprime + iter_disk2[i].Rprime + iter_disk3[i].Rprime + iter_disk4[i].Rprime;
+		system_responseTime_balancedDiskLoad[i] = iter_cpu[i].Ri + iter_diskAverage[i].Ri * 4;
+		line_serviceTime3x[i] = (cpu.Di + disk1.Di + disk2.Di + disk3.Di + disk4.Di)*3;
+		line_20Mark[i] = 20;
 	}
 
 	fstream file;
-	file.open("system_responseTime.txt", ios::out, ios::trunc);
+
+	//task 1 graph
+	file.open("task1_responseTime_serviceTime3x.txt", ios::out);
 	if (file.is_open()) {
-		file << "Users\tResponseTime" << endl;
+		file << "Users\tResponseTime\t3 x ServiceTime" << endl;
 		string output = "";
 		for (size_t i = 0; i < system_responseTime.size(); i++)
 		{
-			output += to_string(i+1) + "\t" + to_string(system_responseTime[i]) + "\n";
+			output += to_string(i+1) + "\t" + to_string(system_responseTime[i]) + "\t" + to_string(line_serviceTime3x[i]) + "\n";
 		}
-		for (size_t i = 0; i < output.length(); i++)
+		file << replace(output, '.', ',');
+		file.close();
+	}
+
+	//task 2 graph
+	file.open("task2_responseTime_20sMark.txt", ios::out);
+	if (file.is_open()) {
+		file << "Users\tResponseTime\t20s Mark" << endl;
+		string output = "";
+		for (size_t i = 0; i < system_responseTime.size(); i++)
 		{
-			if (output[i] == '.')
-				output[i] = ',';
+			output += to_string(i + 1) + "\t" + to_string(system_responseTime[i]) + "\t" + to_string(line_20Mark[i]) + "\n";
 		}
-		file << output;
+		file << replace(output, '.', ',');
+		file.close();
+	}
+	//task 2 graph disk bottleneck
+	file.open("task2_disksResponseTime.txt", ios::out);
+	if (file.is_open()) {
+		file << "Users\tCpu\tDisk 1\tDisk 2\tDisk 3\tDisk 4" << endl;
+		string output = "";
+		for (size_t i = 0; i < system_responseTime.size(); i++)
+		{
+			output += to_string(i + 1) + "\t" + to_string(iter_cpu[i].Ri) + "\t" + to_string(iter_disk1[i].Ri) + "\t" + to_string(iter_disk2[i].Ri) + "\t" + to_string(iter_disk3[i].Ri) + "\t" + to_string(iter_disk4[i].Ri) +  "\n";
+		}
+		file << replace(output, '.', ',');
+		file.close();
+	}
+
+	//task 3 graph
+	file.open("task3_responseTime_20sMark_balancedDiskLoad.txt", ios::out);
+	if (file.is_open()) {
+		file << "Users\tResponseTime\t20s Mark" << endl;
+		string output = "";
+		for (size_t i = 0; i < system_responseTime.size(); i++)
+		{
+			output += to_string(i + 1) + "\t" + to_string(system_responseTime_balancedDiskLoad[i]) + "\t" + to_string(line_20Mark[i]) + "\n";
+		}
+		file << replace(output, '.', ',');
 		file.close();
 	}
 
