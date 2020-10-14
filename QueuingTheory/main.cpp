@@ -39,28 +39,29 @@ struct System {
 
 void calculate(vector<vector<System>>& data) {
 	// Calculate
-	for (size_t iThink = 0; iThink < data.size(); iThink++)
+	for (size_t iThink = 0; iThink < data.size(); iThink++) // Once for every think time.
 	{
 		vector<System>* iterations = &data[iThink];
-		for (size_t iIter = 1; iIter < iterations->size(); iIter++)
+		for (size_t iIter = 1; iIter < iterations->size(); iIter++) // Once for every number of users
 		{
 			System* system = &iterations->at(iIter);
 			// calculate Rprime for all nodes
-			for (size_t iNode = 0; iNode < system->nodes.size(); iNode++)
+			for (size_t iNode = 0; iNode < system->nodes.size(); iNode++) // For every node
 			{
 				Node* node = &system->nodes[iNode];
-				node->Rprime = node->demand * (1.0 + iterations->at(iIter - 1).nodes[iNode].Q);
+				node->Rprime = node->demand * (1.0 + iterations->at(iIter - 1).nodes[iNode].Q); // Directly from the book p.162
+
 				system->ResponseTime += node->Rprime;
 			}
 			// calculate throughput (Same for all nodes)
-			system->X = iIter / (system->thinkTime + system->ResponseTime);
+			system->X = iIter / (system->thinkTime + system->ResponseTime); // p.162
 			// calculate concurrent users
-			system->concurrentUsers = system->X * system->ResponseTime;
+			system->concurrentUsers = system->X * system->ResponseTime; 
 			// calculate queue length
 			for (size_t iNode = 0; iNode < system->nodes.size(); iNode++)
 			{
 				Node* node = &system->nodes[iNode];
-				node->Q = system->X * node->Rprime;
+				node->Q = system->X * node->Rprime; // p.162
 			}
 		}
 	}
